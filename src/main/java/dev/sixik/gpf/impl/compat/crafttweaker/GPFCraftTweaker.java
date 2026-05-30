@@ -1,8 +1,7 @@
 package dev.sixik.gpf.impl.compat.crafttweaker;
 
 import com.blamejared.crafttweaker.api.annotation.ZenRegister;
-import dev.sixik.gpf.impl.server.PlayerStageDataService;
-import dev.sixik.gpf.registry.StagesRegistry;
+import dev.sixik.gpf.api.Stages;
 import net.minecraft.server.level.ServerPlayer;
 import org.openzen.zencode.java.ZenCodeType;
 
@@ -12,41 +11,51 @@ public class GPFCraftTweaker {
 
     @ZenCodeType.Method
     public static short getStageId(String stageName) {
-        return StagesRegistry.INSTANCE.getIdOrThrow(stageName);
+        return Stages.getStageId(stageName);
     }
 
     @ZenCodeType.Method
     public static boolean hasStageSlow(String stageName, ServerPlayer player) {
-        return PlayerStageDataService.getOrCreate(player).hasStageSlow(stageName);
+        return Stages.hasStageSlow(stageName, player);
     }
 
     @ZenCodeType.Method
     public static boolean hasStage(short stage, ServerPlayer player) {
-        return PlayerStageDataService.getOrCreate(player).hasStage(stage);
+        return Stages.hasStage(stage, player);
     }
 
     @ZenCodeType.Method
-    public static void addStageSlow(String stageName, ServerPlayer player) {
-        PlayerStageDataService.addStage(player, getStageId(stageName));
+    public static boolean hasStages(ServerPlayer player, short... stages) {
+        return Stages.hasStages(player, stages);
     }
 
     @ZenCodeType.Method
-    public static void addStage(short stage, ServerPlayer player) {
-        PlayerStageDataService.addStage(player, stage);
+    public static boolean hasStagesSlow(ServerPlayer player, String... stageNames) {
+        return Stages.hasStagesSlow(player, stageNames);
+    }
+
+    @ZenCodeType.Method
+    public static boolean addStageSlow(String stageName, ServerPlayer player) {
+        return Stages.addStageSlow(stageName, player);
+    }
+
+    @ZenCodeType.Method
+    public static boolean addStage(short stage, ServerPlayer player) {
+        return Stages.addStage(stage, player);
     }
 
     @ZenCodeType.Method
     public static boolean removeStageSlow(String stageName, ServerPlayer player) {
-       return PlayerStageDataService.removeStage(player, getStageId(stageName));
+       return Stages.removeStageSlow(stageName, player);
     }
 
     @ZenCodeType.Method
     public static boolean removeStage(short stage, ServerPlayer player) {
-       return PlayerStageDataService.removeStage(player, stage);
+       return Stages.removeStage(stage, player);
     }
 
     @ZenCodeType.Method
-    public static void clearStages(ServerPlayer player) {
-        PlayerStageDataService.getOrCreate(player).clearAllStages();
+    public static boolean clearStages(ServerPlayer player) {
+        return Stages.clearStages(player);
     }
 }

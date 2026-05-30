@@ -1,7 +1,6 @@
 package dev.sixik.gpf.impl.compat.kubejs;
 
-import dev.sixik.gpf.impl.server.PlayerStageDataService;
-import dev.sixik.gpf.registry.StagesRegistry;
+import dev.sixik.gpf.api.Stages;
 import net.minecraft.server.level.ServerPlayer;
 
 public final class GPFKubeJS {
@@ -10,34 +9,42 @@ public final class GPFKubeJS {
     }
 
     public static short getStageId(String stageName) {
-        return StagesRegistry.INSTANCE.getIdOrThrow(stageName);
+        return Stages.getStageId(stageName);
     }
 
     public static boolean hasStageSlow(String stageName, ServerPlayer player) {
-        return PlayerStageDataService.getOrCreate(player).hasStageSlow(stageName);
+        return Stages.hasStageSlow(stageName, player);
     }
 
     public static boolean hasStage(short stage, ServerPlayer player) {
-        return PlayerStageDataService.getOrCreate(player).hasStage(stage);
+        return Stages.hasStage(stage, player);
     }
 
-    public static void addStageSlow(String stageName, ServerPlayer player) {
-        PlayerStageDataService.addStage(player, getStageId(stageName));
+    public static boolean hasStages(ServerPlayer player, short... stages) {
+        return Stages.hasStages(player, stages);
     }
 
-    public static void addStage(short stage, ServerPlayer player) {
-        PlayerStageDataService.addStage(player, stage);
+    public static boolean hasStagesSlow(ServerPlayer player, String... stageNames) {
+        return Stages.hasStagesSlow(player, stageNames);
+    }
+
+    public static boolean addStageSlow(String stageName, ServerPlayer player) {
+        return Stages.addStageSlow(stageName, player);
+    }
+
+    public static boolean addStage(short stage, ServerPlayer player) {
+        return Stages.addStage(stage, player);
     }
 
     public static boolean removeStageSlow(String stageName, ServerPlayer player) {
-        return PlayerStageDataService.removeStage(player, getStageId(stageName));
+        return Stages.removeStageSlow(stageName, player);
     }
 
     public static boolean removeStage(short stage, ServerPlayer player) {
-        return PlayerStageDataService.removeStage(player, stage);
+        return Stages.removeStage(stage, player);
     }
 
-    public static void clearStages(ServerPlayer player) {
-        PlayerStageDataService.replace(player, new long[0]);
+    public static boolean clearStages(ServerPlayer player) {
+        return Stages.clearStages(player);
     }
 }

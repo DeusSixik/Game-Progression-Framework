@@ -25,6 +25,7 @@ public class StagesRegistry {
 
     public static final short UNKNOWN_STAGE = -1;
     private static final Pattern VALID_STAGE_NAME = Pattern.compile("^[a-z0-9_./-]+(?::[a-z0-9_./-]+)?$");
+    private static final RegistrySnapshot EMPTY_SNAPSHOT = RegistrySnapshot.empty();
 
     public static StagesRegistry INSTANCE;
 
@@ -33,6 +34,7 @@ public class StagesRegistry {
     private final Short2ObjectOpenHashMap<String> idToStage = new Short2ObjectOpenHashMap<>();
     private final ObjectOpenHashSet<String> pendingStages = new ObjectOpenHashSet<>();
     private final ObjectOpenHashSet<String> activeStages = new ObjectOpenHashSet<>();
+    private volatile RegistrySnapshot snapshot = EMPTY_SNAPSHOT;
     private boolean collectingStages;
     private boolean pendingFinalization;
 
@@ -83,19 +85,19 @@ public class StagesRegistry {
         }
 
         rebuildActiveStages();
+        rebuildSnapshot();
         pendingFinalization = false;
 
         NeoForge.EVENT_BUS.post(new StageRegisterEndEvent(new StageScriptApi(this)));
     }
 
     public synchronized void clearRuntimeState() {
-        currentStageId = 0;
-        stageIds.clear();
-        idToStage.clear();
+        clearRegistryMaps();
         pendingStages.clear();
         activeStages.clear();
         collectingStages = false;
         pendingFinalization = false;
+        snapshot = EMPTY_SNAPSHOT;
     }
 
     public synchronized void registerStage(String stageName) {
@@ -106,25 +108,16 @@ public class StagesRegistry {
         pendingStages.add(validateStageName(stageName));
     }
 
-    public synchronized SendStagesToClientPacket createSyncPacket() {
-        ObjectArrayList<SendStagesToClientPacket.StageEntry> stages = new ObjectArrayList<>(stageIds.size());
-        ShortArrayList activeStageIds = new ShortArrayList(activeStages.size());
-
-        for (Object2ShortMap.Entry<String> entry : getStageEntriesSortedById()) {
-            short stageId = entry.getShortValue();
-            String stageName = entry.getKey();
-            stages.add(new SendStagesToClientPacket.StageEntry(stageId, stageName));
-
-            if (activeStages.contains(stageName)) {
-                activeStageIds.add(stageId);
-            }
-        }
-
-        return new SendStagesToClientPacket(List.copyOf(stages), activeStageIds.toShortArray());
+    public SendStagesToClientPacket createSyncPacket() {
+        return snapshot.createSyncPacket();
     }
 
     public synchronized void applySyncedStages(List<SendStagesToClientPacket.StageEntry> syncedStages, short[] syncedActiveStageIds) {
-        clearRuntimeState();
+        clearRegistryMaps();
+        pendingStages.clear();
+        activeStages.clear();
+        collectingStages = false;
+        pendingFinalization = false;
 
         for (SendStagesToClientPacket.StageEntry stage : syncedStages) {
             putStage(stage.stageName(), stage.stageId());
@@ -136,6 +129,8 @@ public class StagesRegistry {
                 activeStages.add(activeStageName);
             }
         }
+
+        rebuildSnapshot();
     }
 
     private void loadStoredStages(StageRegistrySavedData savedData) {
@@ -155,6 +150,43 @@ public class StagesRegistry {
         currentStageId = 0;
         stageIds.clear();
         idToStage.clear();
+    }
+
+    private void rebuildSnapshot() {
+        Object2ShortOpenHashMap<String> snapshotStageIds = new Object2ShortOpenHashMap<>(stageIds);
+        snapshotStageIds.defaultReturnValue(UNKNOWN_STAGE);
+
+        String[] snapshotIdToStage = new String[currentStageId];
+        ObjectArrayList<SendStagesToClientPacket.StageEntry> syncedStages = new ObjectArrayList<>(stageIds.size());
+        ShortArrayList syncedActiveStageIds = new ShortArrayList(activeStages.size());
+
+        for (Object2ShortMap.Entry<String> entry : getStageEntriesSortedById()) {
+            short stageId = entry.getShortValue();
+            String stageName = entry.getKey();
+
+            if (stageId >= 0 && stageId < snapshotIdToStage.length) {
+                snapshotIdToStage[stageId] = stageName;
+            }
+
+            syncedStages.add(new SendStagesToClientPacket.StageEntry(stageId, stageName));
+            if (activeStages.contains(stageName)) {
+                syncedActiveStageIds.add(stageId);
+            }
+        }
+
+        ObjectOpenHashSet<String> snapshotActiveStages = new ObjectOpenHashSet<>(activeStages);
+        ObjectArrayList<String> sortedActiveStages = new ObjectArrayList<>(activeStages);
+        sortedActiveStages.sort(Comparator.naturalOrder());
+
+        snapshot = new RegistrySnapshot(
+                snapshotStageIds,
+                snapshotIdToStage,
+                snapshotActiveStages,
+                List.copyOf(syncedStages),
+                syncedActiveStageIds.toShortArray(),
+                List.copyOf(sortedActiveStages),
+                currentStageId
+        );
     }
 
     private void putStage(String stageName, short stageId) {
@@ -200,13 +232,17 @@ public class StagesRegistry {
         return normalized;
     }
 
-    public synchronized short getId(String stageName) {
-        return stageIds.getShort(stageName);
+    public short getId(String stageName) {
+        return snapshot.getId(stageName);
     }
 
-    public synchronized short getIdOrThrow(String stageName) {
+    public short getIdFast(String normalizedStageName) {
+        return snapshot.getId(normalizedStageName);
+    }
+
+    public short getIdOrThrow(String stageName) {
         String normalized = validateStageName(stageName);
-        short stageId = stageIds.getShort(normalized);
+        short stageId = snapshot.getId(normalized);
         if (stageId == UNKNOWN_STAGE) {
             throw new IllegalArgumentException("Unknown stage '" + normalized + "'");
         }
@@ -214,25 +250,107 @@ public class StagesRegistry {
         return stageId;
     }
 
-    public synchronized boolean isKnownStage(String stageName) {
-        return stageIds.containsKey(validateStageName(stageName));
+    public boolean isKnownStage(String stageName) {
+        return snapshot.isKnownStage(validateStageName(stageName));
     }
 
-    public synchronized boolean isActiveStage(String stageName) {
-        return activeStages.contains(validateStageName(stageName));
+    public boolean isKnownStageFast(String normalizedStageName) {
+        return snapshot.isKnownStage(normalizedStageName);
     }
 
-    public synchronized String getName(short id) {
-        return idToStage.get(id);
+    public boolean isActiveStage(String stageName) {
+        return snapshot.isActiveStage(validateStageName(stageName));
     }
 
-    public synchronized int getRegisteredCount() {
-        return currentStageId;
+    public boolean isActiveStageFast(String normalizedStageName) {
+        return snapshot.isActiveStage(normalizedStageName);
     }
 
-    public synchronized List<String> getActiveStages() {
-        ObjectArrayList<String> stages = new ObjectArrayList<>(activeStages);
-        stages.sort(Comparator.naturalOrder());
-        return List.copyOf(stages);
+    public boolean isKnownStageId(short id) {
+        return snapshot.getName(id) != null;
+    }
+
+    public String getName(short id) {
+        return snapshot.getName(id);
+    }
+
+    public int getRegisteredCount() {
+        return snapshot.getRegisteredCount();
+    }
+
+    public List<String> getActiveStages() {
+        return snapshot.getActiveStages();
+    }
+
+    private static final class RegistrySnapshot {
+
+        private final Object2ShortOpenHashMap<String> stageIds;
+        private final String[] idToStage;
+        private final ObjectOpenHashSet<String> activeStages;
+        private final List<SendStagesToClientPacket.StageEntry> syncedStages;
+        private final short[] syncedActiveStageIds;
+        private final List<String> sortedActiveStages;
+        private final int registeredCount;
+
+        private RegistrySnapshot(
+                Object2ShortOpenHashMap<String> stageIds,
+                String[] idToStage,
+                ObjectOpenHashSet<String> activeStages,
+                List<SendStagesToClientPacket.StageEntry> syncedStages,
+                short[] syncedActiveStageIds,
+                List<String> sortedActiveStages,
+                int registeredCount
+        ) {
+            this.stageIds = stageIds;
+            this.idToStage = idToStage;
+            this.activeStages = activeStages;
+            this.syncedStages = syncedStages;
+            this.syncedActiveStageIds = syncedActiveStageIds;
+            this.sortedActiveStages = sortedActiveStages;
+            this.registeredCount = registeredCount;
+        }
+
+        private static RegistrySnapshot empty() {
+            Object2ShortOpenHashMap<String> stageIds = new Object2ShortOpenHashMap<>();
+            stageIds.defaultReturnValue(UNKNOWN_STAGE);
+
+            return new RegistrySnapshot(
+                    stageIds,
+                    new String[0],
+                    new ObjectOpenHashSet<>(),
+                    List.of(),
+                    new short[0],
+                    List.of(),
+                    0
+            );
+        }
+
+        private short getId(String stageName) {
+            return stageIds.getShort(stageName);
+        }
+
+        private boolean isKnownStage(String stageName) {
+            return stageIds.getShort(stageName) != UNKNOWN_STAGE;
+        }
+
+        private boolean isActiveStage(String stageName) {
+            return activeStages.contains(stageName);
+        }
+
+        private String getName(short id) {
+            return id >= 0 && id < idToStage.length ? idToStage[id] : null;
+        }
+
+        private int getRegisteredCount() {
+            return registeredCount;
+        }
+
+        private List<String> getActiveStages() {
+            return sortedActiveStages;
+        }
+
+        private SendStagesToClientPacket createSyncPacket() {
+            return new SendStagesToClientPacket(syncedStages, syncedActiveStageIds.clone());
+        }
     }
 }

@@ -1,6 +1,7 @@
 package dev.sixik.gpf.impl.server;
 
 import dev.sixik.gpf.GameProgressionFramework;
+import dev.sixik.gpf.api.StageData;
 import dev.sixik.gpf.data.BaseBitStageData;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -11,6 +12,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -79,9 +81,57 @@ public final class PlayerStageDataSavedData extends SavedData {
         return removed;
     }
 
-    public void replace(UUID ownerId, long[] rawStages) {
-        playerStages.put(ownerId, new BaseBitStageData(rawStages, ownerId));
+    public boolean clear(UUID ownerId) {
+        BaseBitStageData stageData = getOrCreate(ownerId);
+        if (stageData.toRawData().length == 0) {
+            return false;
+        }
+
+        stageData.clearAllStages();
         setDirty();
+        return true;
+    }
+
+    public void replace(UUID ownerId, long[] rawStages) {
+        playerStages.put(ownerId, new BaseBitStageData(rawStages.clone(), ownerId));
+        setDirty();
+    }
+
+    public boolean replaceIfChanged(UUID ownerId, long[] rawStages) {
+        BaseBitStageData current = getOrCreate(ownerId);
+        long[] previousRaw = current.toRawDataCopy();
+        long[] newRaw = rawStages.clone();
+        if (Arrays.equals(previousRaw, newRaw)) {
+            return false;
+        }
+
+        playerStages.put(ownerId, new BaseBitStageData(newRaw, ownerId));
+        setDirty();
+        return true;
+    }
+
+    public boolean set(UUID ownerId, StageData other) {
+        BaseBitStageData current = getOrCreate(ownerId);
+        long[] previousRaw = current.toRawDataCopy();
+        current.set(other);
+        if (Arrays.equals(previousRaw, current.toRawData())) {
+            return false;
+        }
+
+        setDirty();
+        return true;
+    }
+
+    public boolean merge(UUID ownerId, StageData other) {
+        BaseBitStageData current = getOrCreate(ownerId);
+        long[] previousRaw = current.toRawDataCopy();
+        current.merge(other);
+        if (Arrays.equals(previousRaw, current.toRawData())) {
+            return false;
+        }
+
+        setDirty();
+        return true;
     }
 
     @Override
