@@ -3,6 +3,7 @@ package dev.sixik.gpf.api.event;
 import dev.sixik.gpf.api.StageData;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.Event;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -13,6 +14,8 @@ import java.util.UUID;
  */
 public final class PlayerStagesChangedEvent extends Event {
 
+    private final UUID playerId;
+    @Nullable
     private final ServerPlayer player;
     private final StageData previousStages;
     private final StageData currentStages;
@@ -22,29 +25,36 @@ public final class PlayerStagesChangedEvent extends Event {
     /**
      * Creates a new batch change event.
      *
-     * @param player the affected player
+     * @param playerId the affected player id
+     * @param player the affected online player, or {@code null} when offline
      * @param previousStages the snapshot before the change
      * @param currentStages the snapshot after the change
      * @param addedStageIds stage ids that were added by this change
      * @param removedStageIds stage ids that were removed by this change
      */
     public PlayerStagesChangedEvent(
-            ServerPlayer player,
+            UUID playerId,
+            @Nullable ServerPlayer player,
             StageData previousStages,
             StageData currentStages,
             short[] addedStageIds,
             short[] removedStageIds
     ) {
-        this.player = Objects.requireNonNull(player, "Player cannot be null");
+        this.playerId = Objects.requireNonNull(playerId, "Player id cannot be null");
+        this.player = player;
         this.previousStages = Objects.requireNonNull(previousStages, "Previous stages cannot be null");
         this.currentStages = Objects.requireNonNull(currentStages, "Current stages cannot be null");
         this.addedStageIds = Objects.requireNonNull(addedStageIds, "Added stage ids cannot be null").clone();
         this.removedStageIds = Objects.requireNonNull(removedStageIds, "Removed stage ids cannot be null").clone();
+        if (!playerId.equals(previousStages.getOwnerId()) || !playerId.equals(currentStages.getOwnerId())) {
+            throw new IllegalArgumentException("Stage snapshots owner does not match provided player id");
+        }
     }
 
     /**
-     * @return the affected player
+     * @return the affected online player, or {@code null} when the owner is offline
      */
+    @Nullable
     public ServerPlayer getPlayer() {
         return player;
     }
@@ -53,7 +63,7 @@ public final class PlayerStagesChangedEvent extends Event {
      * @return the unique identifier of the affected player
      */
     public UUID getPlayerId() {
-        return player.getUUID();
+        return playerId;
     }
 
     /**
@@ -82,5 +92,12 @@ public final class PlayerStagesChangedEvent extends Event {
      */
     public short[] getRemovedStageIds() {
         return removedStageIds.clone();
+    }
+
+    /**
+     * @return {@code true} when the owner is currently online
+     */
+    public boolean isPlayerOnline() {
+        return player != null;
     }
 }

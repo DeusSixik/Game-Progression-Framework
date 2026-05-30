@@ -6,7 +6,6 @@ import dev.sixik.gpf.registry.StagesRegistry;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 
 @Mod(GameProgressionFramework.MODID)

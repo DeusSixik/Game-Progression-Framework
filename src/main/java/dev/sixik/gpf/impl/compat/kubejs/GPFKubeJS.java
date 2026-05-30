@@ -28,6 +28,14 @@ public final class GPFKubeJS {
         return Stages.hasStagesSlow(player, stageNames);
     }
 
+    public static boolean hasAnyStage(ServerPlayer player, short... stages) {
+        return Stages.hasAnyStage(player, stages);
+    }
+
+    public static boolean hasAnyStageSlow(ServerPlayer player, String... stageNames) {
+        return Stages.hasAnyStageSlow(player, stageNames);
+    }
+
     public static boolean addStageSlow(String stageName, ServerPlayer player) {
         return Stages.addStageSlow(stageName, player);
     }

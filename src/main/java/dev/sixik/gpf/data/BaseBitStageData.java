@@ -83,6 +83,17 @@ public class BaseBitStageData implements StageData {
     }
 
     @Override
+    public boolean hasAnyStage(short... stageIds) {
+        for (int i = 0; i < stageIds.length; i++) {
+            if (unlockedStages.get(stageIds[i])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
     public void clearAllStages() {
         unlockedStages.clear();
     }

@@ -177,6 +177,8 @@ public class StagesRegistry {
         ObjectOpenHashSet<String> snapshotActiveStages = new ObjectOpenHashSet<>(activeStages);
         ObjectArrayList<String> sortedActiveStages = new ObjectArrayList<>(activeStages);
         sortedActiveStages.sort(Comparator.naturalOrder());
+        ObjectArrayList<String> sortedRegisteredStages = new ObjectArrayList<>(stageIds.keySet());
+        sortedRegisteredStages.sort(Comparator.naturalOrder());
 
         snapshot = new RegistrySnapshot(
                 snapshotStageIds,
@@ -185,6 +187,7 @@ public class StagesRegistry {
                 List.copyOf(syncedStages),
                 syncedActiveStageIds.toShortArray(),
                 List.copyOf(sortedActiveStages),
+                List.copyOf(sortedRegisteredStages),
                 currentStageId
         );
     }
@@ -282,6 +285,10 @@ public class StagesRegistry {
         return snapshot.getActiveStages();
     }
 
+    public List<String> getRegisteredStages() {
+        return snapshot.getRegisteredStages();
+    }
+
     private static final class RegistrySnapshot {
 
         private final Object2ShortOpenHashMap<String> stageIds;
@@ -290,6 +297,7 @@ public class StagesRegistry {
         private final List<SendStagesToClientPacket.StageEntry> syncedStages;
         private final short[] syncedActiveStageIds;
         private final List<String> sortedActiveStages;
+        private final List<String> registeredStages;
         private final int registeredCount;
 
         private RegistrySnapshot(
@@ -299,6 +307,7 @@ public class StagesRegistry {
                 List<SendStagesToClientPacket.StageEntry> syncedStages,
                 short[] syncedActiveStageIds,
                 List<String> sortedActiveStages,
+                List<String> registeredStages,
                 int registeredCount
         ) {
             this.stageIds = stageIds;
@@ -307,6 +316,7 @@ public class StagesRegistry {
             this.syncedStages = syncedStages;
             this.syncedActiveStageIds = syncedActiveStageIds;
             this.sortedActiveStages = sortedActiveStages;
+            this.registeredStages = registeredStages;
             this.registeredCount = registeredCount;
         }
 
@@ -320,6 +330,7 @@ public class StagesRegistry {
                     new ObjectOpenHashSet<>(),
                     List.of(),
                     new short[0],
+                    List.of(),
                     List.of(),
                     0
             );
@@ -347,6 +358,10 @@ public class StagesRegistry {
 
         private List<String> getActiveStages() {
             return sortedActiveStages;
+        }
+
+        private List<String> getRegisteredStages() {
+            return registeredStages;
         }
 
         private SendStagesToClientPacket createSyncPacket() {

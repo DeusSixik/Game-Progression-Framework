@@ -1,6 +1,9 @@
 package dev.sixik.gpf.api.event;
 
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.UUID;
 
 /**
  * Fired after a player gains a single stage.
@@ -10,11 +13,12 @@ public final class PlayerStageAddedEvent extends PlayerStageEvent {
     /**
      * Creates a new single-stage add event.
      *
-     * @param player the affected player
+     * @param playerId the affected player id
+     * @param player the affected online player, or {@code null} when offline
      * @param stageId the added stage id
      * @param stageName the added stage name
      */
-    public PlayerStageAddedEvent(ServerPlayer player, short stageId, String stageName) {
-        super(player, stageId, stageName);
+    public PlayerStageAddedEvent(UUID playerId, @Nullable ServerPlayer player, short stageId, String stageName) {
+        super(playerId, player, stageId, stageName);
     }
 }

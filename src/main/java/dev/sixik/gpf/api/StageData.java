@@ -92,6 +92,22 @@ public interface StageData {
     }
 
     /**
+     * Checks whether at least one of the provided stage ids is present.
+     *
+     * @param stageIds the stage ids to check
+     * @return {@code true} when any stage is present
+     */
+    default boolean hasAnyStage(short... stageIds) {
+        for (short stageId : stageIds) {
+            if (hasStage(stageId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Merges all stages from another container into this one.
      *
      * @param other the source container

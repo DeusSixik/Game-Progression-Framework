@@ -35,6 +35,16 @@ public class GPFCraftTweaker {
     }
 
     @ZenCodeType.Method
+    public static boolean hasAnyStage(ServerPlayer player, short... stages) {
+        return Stages.hasAnyStage(player, stages);
+    }
+
+    @ZenCodeType.Method
+    public static boolean hasAnyStageSlow(ServerPlayer player, String... stageNames) {
+        return Stages.hasAnyStageSlow(player, stageNames);
+    }
+
+    @ZenCodeType.Method
     public static boolean addStageSlow(String stageName, ServerPlayer player) {
         return Stages.addStageSlow(stageName, player);
     }

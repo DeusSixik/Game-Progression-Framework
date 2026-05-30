@@ -133,6 +133,9 @@ dependencies {
 
     api("dev.latvian.mods:kubejs-neoforge:$kubejs_version")
     interfaceInjectionData("dev.latvian.mods:kubejs-neoforge:$kubejs_version")
+
+    jarJar(implementation("com.github.ben-manes.caffeine:caffeine:3.2.4"))
+    additionalRuntimeClasspath("com.github.ben-manes.caffeine:caffeine:3.2.4")
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
