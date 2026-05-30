@@ -1,0 +1,1 @@
+dev.sixik.gpf.impl.compat.kubejs.GPFKubeJSPlugin
