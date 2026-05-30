@@ -3,6 +3,7 @@ package dev.sixik.gpf.registry;
 import dev.sixik.gpf.GameProgressionFramework;
 import dev.sixik.gpf.api.event.StageRegisterEndEvent;
 import dev.sixik.gpf.api.event.StageRegisterEvent;
+import dev.sixik.gpf.api.event.StageRegisterFinalizeEvent;
 import dev.sixik.gpf.api.script.StageScriptApi;
 import dev.sixik.gpf.impl.network.SendStagesToClientPacket;
 import dev.sixik.gpf.impl.server.StageRegistrySavedData;
@@ -95,6 +96,8 @@ public class StagesRegistry {
         } finally {
             insideEndEvent = false;
         }
+
+        NeoForge.EVENT_BUS.post(new StageRegisterFinalizeEvent(new StageScriptApi(this)));
     }
 
     public synchronized void clearRuntimeState() {
