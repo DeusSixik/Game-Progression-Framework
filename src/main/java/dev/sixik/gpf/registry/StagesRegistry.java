@@ -37,6 +37,7 @@ public class StagesRegistry {
     private volatile RegistrySnapshot snapshot = EMPTY_SNAPSHOT;
     private boolean collectingStages;
     private boolean pendingFinalization;
+    private boolean insideEndEvent;
 
     public StagesRegistry() {
         stageIds.defaultReturnValue(UNKNOWN_STAGE);
@@ -88,7 +89,12 @@ public class StagesRegistry {
         rebuildSnapshot();
         pendingFinalization = false;
 
-        NeoForge.EVENT_BUS.post(new StageRegisterEndEvent(new StageScriptApi(this)));
+        insideEndEvent = true;
+        try {
+            NeoForge.EVENT_BUS.post(new StageRegisterEndEvent(new StageScriptApi(this)));
+        } finally {
+            insideEndEvent = false;
+        }
     }
 
     public synchronized void clearRuntimeState() {
@@ -287,6 +293,10 @@ public class StagesRegistry {
 
     public List<String> getRegisteredStages() {
         return snapshot.getRegisteredStages();
+    }
+
+    public boolean isInsideEndEvent() {
+        return insideEndEvent;
     }
 
     private static final class RegistrySnapshot {

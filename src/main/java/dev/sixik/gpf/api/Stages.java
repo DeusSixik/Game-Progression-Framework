@@ -16,6 +16,16 @@ public final class Stages {
     private Stages() {
     }
 
+    public static boolean isInsideEndEvent() {
+        return StagesRegistry.INSTANCE.isInsideEndEvent();
+    }
+
+    public static void checkInsideEndEvent() {
+        if (!isInsideEndEvent()) {
+            throw new IllegalStateException("Cannot access stages outside of the end event!");
+        }
+    }
+
     /**
      * Creates a progression view for the provided player id.
      *
