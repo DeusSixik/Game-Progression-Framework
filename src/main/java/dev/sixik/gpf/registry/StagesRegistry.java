@@ -286,6 +286,10 @@ public class StagesRegistry {
         return snapshot.getName(id);
     }
 
+    public short[] getStagesIds() {
+        return snapshot.getStagesIds();
+    }
+
     public int getRegisteredCount() {
         return snapshot.getRegisteredCount();
     }
@@ -347,6 +351,10 @@ public class StagesRegistry {
                     List.of(),
                     0
             );
+        }
+
+        private short[] getStagesIds() {
+           return stageIds.values().toShortArray();
         }
 
         private short getId(String stageName) {
