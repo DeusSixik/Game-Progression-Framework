@@ -145,7 +145,7 @@ public final class Stages {
     /**
      * Resolves a stage name and checks whether the owner has it.
      *
-     * @param ownerId the owner to query
+     * @param ownerId   the owner to query
      * @param stageName the normalized stage name
      * @return {@code true} when the owner has the stage
      */
@@ -168,7 +168,7 @@ public final class Stages {
     /**
      * Resolves all provided stage names and checks whether the owner has every one of them.
      *
-     * @param ownerId the owner to query
+     * @param ownerId    the owner to query
      * @param stageNames the normalized stage names to check
      * @return {@code true} when the owner has all provided stages
      */
@@ -179,7 +179,7 @@ public final class Stages {
     /**
      * Checks whether the owner has every provided stage id.
      *
-     * @param ownerId the owner to query
+     * @param ownerId  the owner to query
      * @param stageIds the stage ids to check
      * @return {@code true} when the owner has all provided stages
      */
@@ -191,7 +191,7 @@ public final class Stages {
     /**
      * Checks whether the owner has every provided trusted stage id without validating them first.
      *
-     * @param ownerId the owner to query
+     * @param ownerId  the owner to query
      * @param stageIds the trusted stage ids to check
      * @return {@code true} when the owner has all provided stages
      */
@@ -202,7 +202,7 @@ public final class Stages {
     /**
      * Resolves all provided stage names and checks whether the owner has at least one of them.
      *
-     * @param ownerId the owner to query
+     * @param ownerId    the owner to query
      * @param stageNames the normalized stage names to check
      * @return {@code true} when the owner has any provided stage
      */
@@ -213,7 +213,7 @@ public final class Stages {
     /**
      * Checks whether the owner has at least one of the provided stage ids.
      *
-     * @param ownerId the owner to query
+     * @param ownerId  the owner to query
      * @param stageIds the stage ids to check
      * @return {@code true} when the owner has any provided stage
      */
@@ -225,7 +225,7 @@ public final class Stages {
     /**
      * Checks whether the owner has at least one trusted stage id without validating them first.
      *
-     * @param ownerId the owner to query
+     * @param ownerId  the owner to query
      * @param stageIds the trusted stage ids to check
      * @return {@code true} when the owner has any provided stage
      */
@@ -247,7 +247,7 @@ public final class Stages {
     /**
      * Resolves a stage name and adds it to the owner.
      *
-     * @param ownerId the target owner
+     * @param ownerId   the target owner
      * @param stageName the normalized stage name
      * @return {@code true} when the owner gained the stage
      */
@@ -281,7 +281,7 @@ public final class Stages {
     /**
      * Resolves a stage name and removes it from the owner.
      *
-     * @param ownerId the target owner
+     * @param ownerId   the target owner
      * @param stageName the normalized stage name
      * @return {@code true} when the owner lost the stage
      */
@@ -325,7 +325,7 @@ public final class Stages {
     /**
      * Replaces the owner's stages with the provided stage container.
      *
-     * @param ownerId the target owner
+     * @param ownerId   the target owner
      * @param stageData the new stage contents
      * @return {@code true} when the owner's stages changed
      */
@@ -336,7 +336,7 @@ public final class Stages {
     /**
      * Merges the provided stages into the owner.
      *
-     * @param ownerId the target owner
+     * @param ownerId   the target owner
      * @param stageData the stage contents to merge
      * @return {@code true} when the owner's stages changed
      */
@@ -347,7 +347,7 @@ public final class Stages {
     /**
      * Replaces the owner's stages with a raw bitset representation.
      *
-     * @param ownerId the target owner
+     * @param ownerId   the target owner
      * @param rawStages the raw stage bitset
      * @return {@code true} when the owner's stages changed
      */
